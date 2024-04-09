@@ -12,7 +12,10 @@ provider "vault" {
 }
 
 locals {
-  api_base_path     = "${var.vault_addr}/v1/${var.namespace}"
+  api_base_path = join("/", concat(
+    [var.vault_addr, "v1"],
+    var.namespace != "root" ? [var.namespace] : [],
+  ))
   pki_codesign_path = "${local.api_base_path}/${vault_mount.pki_codesign.path}"
 }
 
@@ -56,6 +59,7 @@ resource "vault_pki_secret_backend_config_urls" "code_sign_ca" {
   issuing_certificates    = ["{{cluster_aia_path}}/issuer/{{issuer_id}}/der"]
   crl_distribution_points = ["{{cluster_aia_path}}/issuer/{{issuer_id}}/crl/der"]
   ocsp_servers            = ["{{cluster_aia_path}}/issuer/{{issuer_id}}/ocsp"]
+  enable_templating       = true
 }
 
 resource "vault_pki_secret_backend_role" "code_sign_gh_actions" {
@@ -85,7 +89,7 @@ resource "vault_jwt_auth_backend_role" "github_actions" {
   role_name       = "repository"
   role_type       = "jwt"
   bound_audiences = [var.vault_addr]
-  bound_claims    = { repository_owner = var.repository_owners }
+  bound_claims    = { repository_owner = join(",", var.repository_owners) }
   user_claim      = "sub"
   claim_mappings = {
     repository       = "repository"
@@ -95,8 +99,8 @@ resource "vault_jwt_auth_backend_role" "github_actions" {
   }
 
   token_type     = "batch"
-  token_ttl      = "10m"
-  token_max_ttl  = "10m"
+  token_ttl      = 600
+  token_max_ttl  = 600
   token_policies = [vault_policy.github_actions_code_sign_cert.name]
 }
 
@@ -121,12 +125,17 @@ data "vault_policy_document" "github_actions_code_sign_cert" {
 
       allowed_parameter {
         key   = "csr"
-        value = ["*"]
+        value = []
+      }
+
+      allowed_parameter {
+        key   = "common_name"
+        value = []
       }
 
       allowed_parameter {
         key   = "uri_sans"
-        value = ["*"]
+        value = []
       }
     }
   }

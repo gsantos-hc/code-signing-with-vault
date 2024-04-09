@@ -39,9 +39,9 @@ variable "pki_codesign_cert" {
 }
 
 variable "code_sign_cert_ttl" {
-  description = "TTL of short-lived code signing certificates"
-  type        = string
-  default     = "1h"
+  description = "TTL of short-lived code signing certificates, in seconds"
+  type        = number
+  default     = 3600
 }
 
 # GitHub Actions Auth ----------------------------------------------------------
