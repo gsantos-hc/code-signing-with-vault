@@ -1,0 +1,50 @@
+name: sign-binary
+run-name: "Sign ${{ github.ref }} binary"
+
+jobs:
+  sign-binary:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Get code signing certificate
+        id: cert
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ vars.VAULT_ADDR }}
+          namespace: admin/pki
+          method: jwt
+          path: gh-actions
+          role: repository
+          secrets: |
+            pki-codesign/issue/github-actions certificate ;
+            pki-codesign/issue/github-actions private_key ;
+            pki-codesign/issue/github-actions ca_chain ;
+
+      - name: Import key
+        shell: powershell
+        run: |
+          Set-Content -Path "codesigning.crt" -Value "${{ steps.cert.outputs.certificate }}\n${{ steps.cert.outputs.ca_chain }}"
+          Set-Content -Path "codesigning.key" -Value "${{ steps.cert.outputs.private_key }}"
+          openssl pkcs12 -export -out codesigning.pfx -inkey codesigning.key -in codesigning.crt
+          Import-PfxCertificate -FilePath "codesigning.pfx" -CertStoreLocation Cert:\CurrentUser\My
+          Remove-Item codesigning.crt codesigning.key codesigning.pfx
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sign binary
+        shell: powershell
+        run: |
+          $Cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1
+          Set-AuthenticodeSignature `
+            -Certificate ... `
+            -FilePath "smallexe64.exe" `
+            -TimestampServer "http://timestamp.digicert.com"
+
+      - name: Upload signed binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: signed-binary
+          path: smallexe64.exe
