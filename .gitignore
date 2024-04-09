@@ -1,3 +1,8 @@
+root-ca/*
+!root-ca/generate
+!root-ca/sign
+!root-ca/extensions.conf
+
 # Created by https://www.toptal.com/developers/gitignore/api/terraform,visualstudiocode,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=terraform,visualstudiocode,macos
 

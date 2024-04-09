@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euxo pipefail
+
+readonly ROOT_CA_KEY="root.key"
+readonly ROOT_CA_CRT="root.crt"
+readonly ROOT_CA_TTL=3650 # 10 years
+
+# Generate EC P-521 key pair for Root CA
+openssl ecparam -genkey -name secp521r1 -out "$ROOT_CA_KEY" -outform PEM
+
+# Generate self-signed Root CA certificate
+openssl req -new -x509 \
+    -key "$ROOT_CA_KEY" \
+    -out "$ROOT_CA_CRT" \
+    -days "$ROOT_CA_TTL" \
+    -subj "/CN=ACME Root CA"

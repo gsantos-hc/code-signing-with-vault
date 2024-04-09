@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euxo pipefail
+
+readonly ROOT_CA_KEY="root.key"
+readonly ROOT_CA_CERT="root.crt"
+readonly CODESIGN_TTL=1825 # 5 years
+
+openssl x509 \
+    -req -in codesign-ca.csr \
+    -out codesign-ca.crt \
+    -days "$CODESIGN_TTL" \
+    -CA "$ROOT_CA_CERT" \
+    -CAkey "$ROOT_CA_KEY" \
+    -CAcreateserial \
+    -extfile "extensions.conf" \
+    -extensions "codesign_ca"
