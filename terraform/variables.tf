@@ -20,7 +20,7 @@ variable "pki_country" {
   description = "Two-letter country code for the Certificate Authority and Code Signing certificates"
   type        = string
   default     = null
-  
+
   validation {
     condition     = var.pki_country == null || length(var.pki_country) == 2
     error_message = "If specified, `pki_country` must be a two-letter country code."
