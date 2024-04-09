@@ -21,6 +21,7 @@ jobs:
           method: jwt
           path: gh-actions
           role: repository
+          jwtGithubAudience: ${{ vars.VAULT_ADDR }}
           secrets: |
             pki-codesign/issue/github-actions certificate ;
             pki-codesign/issue/github-actions private_key ;
