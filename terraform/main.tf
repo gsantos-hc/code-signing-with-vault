@@ -65,15 +65,23 @@ resource "vault_pki_secret_backend_config_urls" "code_sign_ca" {
 resource "vault_pki_secret_backend_role" "code_sign_gh_actions" {
   backend                   = vault_mount.pki_codesign.path
   name                      = "github-actions"
+  key_type                  = "ec"
+  key_bits                  = 256
   ttl                       = var.code_sign_cert_ttl
   max_ttl                   = var.code_sign_cert_ttl
+  key_usage                 = ["DigitalSignature"]
+  code_signing_flag         = true
   server_flag               = false
   client_flag               = false
-  code_signing_flag         = true
-  country                   = var.pki_country
-  organization              = var.pki_organization
+  country                   = var.pki_country != null ? [var.pki_country] : null
+  organization              = var.pki_organization != null ? [var.pki_organization] : null
+  enforce_hostnames         = false
+  allowed_domains_template  = true
+  allowed_domains           = [local.spiffe_id_template]
+  allow_bare_domains        = true
   allowed_uri_sans_template = true
   allowed_uri_sans          = [local.spiffe_id_template]
+  allow_ip_sans             = false
 }
 
 # Authentication Backend -------------------------------------------------------
