@@ -1,5 +1,9 @@
 name: sign-binary
 run-name: "Sign ${{ github.ref }} binary"
+on:
+  push: {} # FIXME
+  release:
+    types: [published]
 
 jobs:
   sign-binary:
