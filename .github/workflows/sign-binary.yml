@@ -59,11 +59,12 @@ jobs:
           $Cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1
           Set-AuthenticodeSignature `
             -Certificate $Cert `
-            -FilePath "smallexe64.exe" `
+            -FilePath "vault.exe" `
             -TimestampServer "http://timestamp.digicert.com"
 
       - name: Upload signed binary
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: signed-binary
-          path: smallexe64.exe
+          name: vault-signed.exe
+          path: vault.exe
+          retention-days: 1
