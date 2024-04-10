@@ -50,13 +50,12 @@ jobs:
           Set-Content -Path "codesigning.crt" -Value "$($CertJson.data.certificate)`n$($CertJson.data.ca_chain -Join "`n")"
           Set-Content -Path "codesigning.key" -Value "$($CertJson.data.private_key)"
           openssl pkcs12 -export -out codesigning.pfx -inkey codesigning.key -in codesigning.crt -passout pass:""
-          Import-PfxCertificate -FilePath "codesigning.pfx" -CertStoreLocation Cert:\CurrentUser\My
-          Remove-Item -Path codesigning.crt,codesigning.key,codesigning.pfx
+          Remove-Item -Path codesigning.crt,codesigning.key
 
       - name: Sign binary
         shell: powershell
         run: |
-          $Cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1
+          $Cert = Get-PfxCertificate -FilePath "codesigning.pfx"
           Set-AuthenticodeSignature `
             -Certificate $Cert `
             -FilePath "vault.exe" `
