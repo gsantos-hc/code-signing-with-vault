@@ -51,7 +51,7 @@ jobs:
           Set-Content -Path "codesigning.key" -Value "$($CertJson.data.private_key)"
           openssl pkcs12 -export -out codesigning.pfx -inkey codesigning.key -in codesigning.crt -passout pass:""
           Import-PfxCertificate -FilePath "codesigning.pfx" -CertStoreLocation Cert:\CurrentUser\My
-          Remove-Item codesigning.crt codesigning.key codesigning.pfx
+          Remove-Item -Path codesigning.crt,codesigning.key,codesigning.pfx
 
       - name: Sign binary
         shell: powershell
