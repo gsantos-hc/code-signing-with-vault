@@ -31,7 +31,8 @@ jobs:
       - name: Authenticate to Vault
         uses: hashicorp/vault-action@v2
         with:
-          namespace: admin/pki
+          url: ${{ vars.VAULT_ADDR }}
+          namespace: ${{ vars.VAULT_NAMESPACE }}
           method: jwt
           path: gh-actions
           role: repository
