@@ -1,19 +1,33 @@
 name: sign-binary
 run-name: "Sign ${{ github.ref }} binary"
+
 on:
   push: {} # FIXME
   release:
     types: [published]
 
+env:
+  VAULT_NAMESPACE: admin/pki
+
 jobs:
   sign-binary:
     runs-on: windows-latest
+    environment: prod
     permissions:
       contents: read
       id-token: write
     steps:
-      - name: Get code signing certificate
-        id: cert
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Vault CLI
+        shell: powershell
+        run: |
+          Invoke-WebRequest -OutFile "vault.zip" -Uri "https://releases.hashicorp.com/vault/1.16.1/vault_1.16.1_windows_amd64.zip"
+          Expand-Archive -Path "vault.zip" -DestinationPath .
+          Remove-Item "vault.zip"
+
+      - name: Authenticate to Vault
         uses: hashicorp/vault-action@v2
         with:
           url: ${{ vars.VAULT_ADDR }}
@@ -22,29 +36,26 @@ jobs:
           path: gh-actions
           role: repository
           jwtGithubAudience: ${{ vars.VAULT_ADDR }}
-          secrets: |
-            pki-codesign/issue/github-actions certificate ;
-            pki-codesign/issue/github-actions private_key ;
-            pki-codesign/issue/github-actions ca_chain ;
+          exportToken: true
 
-      - name: Import key
+      - name: Get code signing certificate
         shell: powershell
         run: |
-          Set-Content -Path "codesigning.crt" -Value "${{ steps.cert.outputs.certificate }}\n${{ steps.cert.outputs.ca_chain }}"
-          Set-Content -Path "codesigning.key" -Value "${{ steps.cert.outputs.private_key }}"
-          openssl pkcs12 -export -out codesigning.pfx -inkey codesigning.key -in codesigning.crt
+          $Endpoint = "pki-codesign/issue/github-actions"
+          $CertSubject = "spiffe://github.com/${{ github.repository }}@${{ vars.ENVIRONMENT_STAGE }}"
+          $Cert = "$(./vault.exe write -format=json "$Endpoint" common_name="$CertSubject" uri_sans="$CertSubject" | ConvertFrom-Json)"
+          Set-Content -Path "codesigning.crt" -Value "$($Cert.data.certificate)`n$($Cert.data.ca_chain -Join "`n")"
+          Set-Content -Path "codesigning.key" -Value "$($Cert.data.private_key)"
+          openssl pkcs12 -export -out codesigning.pfx -inkey codesigning.key -in codesigning.crt -passout pass:""
           Import-PfxCertificate -FilePath "codesigning.pfx" -CertStoreLocation Cert:\CurrentUser\My
           Remove-Item codesigning.crt codesigning.key codesigning.pfx
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Sign binary
         shell: powershell
         run: |
           $Cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1
           Set-AuthenticodeSignature `
-            -Certificate ... `
+            -Certificate $Cert `
             -FilePath "smallexe64.exe" `
             -TimestampServer "http://timestamp.digicert.com"
 
