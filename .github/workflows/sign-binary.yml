@@ -7,7 +7,8 @@ on:
     types: [published]
 
 env:
-  VAULT_NAMESPACE: admin/pki
+  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+  VAULT_NAMESPACE: ${{ vars.VAULT_NAMESPACE }}
 
 jobs:
   sign-binary:
@@ -30,7 +31,6 @@ jobs:
       - name: Authenticate to Vault
         uses: hashicorp/vault-action@v2
         with:
-          url: ${{ vars.VAULT_ADDR }}
           namespace: admin/pki
           method: jwt
           path: gh-actions
