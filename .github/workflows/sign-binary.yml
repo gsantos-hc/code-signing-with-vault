@@ -32,12 +32,12 @@ jobs:
       - name: Authenticate to Vault
         uses: hashicorp/vault-action@v2
         with:
-          url: ${{ vars.VAULT_ADDR }}
-          namespace: ${{ vars.VAULT_NAMESPACE }}
+          url: ${{ env.VAULT_ADDR }}
+          namespace: ${{ env.VAULT_NAMESPACE }}
           method: jwt
           path: gh-actions
           role: repository
-          jwtGithubAudience: ${{ vars.VAULT_ADDR }}
+          jwtGithubAudience: ${{ env.VAULT_ADDR }}
           exportToken: true
 
       - name: Get code signing certificate
