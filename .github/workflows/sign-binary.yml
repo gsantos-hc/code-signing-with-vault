@@ -45,9 +45,10 @@ jobs:
         run: |
           $Endpoint = "pki-codesign/issue/github-actions"
           $CertSubject = "spiffe://github.com/${{ github.repository }}@${{ env.environment }}"
-          $Cert = "$(./vault.exe write -format=json "$Endpoint" common_name="$CertSubject" uri_sans="$CertSubject" | ConvertFrom-Json)"
-          Set-Content -Path "codesigning.crt" -Value "$($Cert.data.certificate)`n$($Cert.data.ca_chain -Join "`n")"
-          Set-Content -Path "codesigning.key" -Value "$($Cert.data.private_key)"
+          $Cert = $(./vault.exe write -format=json "$Endpoint" common_name="$CertSubject" uri_sans="$CertSubject")
+          $CertJson = $Cert | ConvertFrom-Json
+          Set-Content -Path "codesigning.crt" -Value "$($CertJson.data.certificate)`n$($CertJson.data.ca_chain -Join "`n")"
+          Set-Content -Path "codesigning.key" -Value "$($CertJson.data.private_key)"
           openssl pkcs12 -export -out codesigning.pfx -inkey codesigning.key -in codesigning.crt -passout pass:""
           Import-PfxCertificate -FilePath "codesigning.pfx" -CertStoreLocation Cert:\CurrentUser\My
           Remove-Item codesigning.crt codesigning.key codesigning.pfx
