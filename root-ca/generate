@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
+readonly ROOT_CA_CN="ACME Root CA"
 readonly ROOT_CA_KEY="root.key"
 readonly ROOT_CA_CRT="root.crt"
 readonly ROOT_CA_TTL=3650 # 10 years
@@ -13,4 +14,4 @@ openssl req -new -x509 \
     -key "$ROOT_CA_KEY" \
     -out "$ROOT_CA_CRT" \
     -days "$ROOT_CA_TTL" \
-    -subj "/CN=ACME Root CA"
+    -subj "/CN=${ROOT_CA_CN}"
