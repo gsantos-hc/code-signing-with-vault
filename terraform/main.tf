@@ -12,10 +12,7 @@ provider "vault" {
 }
 
 locals {
-  api_base_path = join("/", concat(
-    [var.vault_addr, "v1"],
-    var.namespace != "root" ? [var.namespace] : [],
-  ))
+  api_base_path     = trimsuffix(join("/", [var.vault_addr, "v1", var.namespace]), "/")
   pki_codesign_path = "${local.api_base_path}/${vault_mount.pki_codesign.path}"
 }
 

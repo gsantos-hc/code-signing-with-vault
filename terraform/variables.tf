@@ -7,7 +7,12 @@ variable "vault_addr" {
 variable "namespace" {
   description = "Vault namespace in which to configure PKI resources"
   type        = string
-  default     = "root"
+  default     = ""
+
+  validation {
+    condition     = var.namespace != "root"
+    error_message = "Leave the namespace variable blank when using the root namespace."
+  }
 }
 
 # PKI mounts and roles ---------------------------------------------------------
