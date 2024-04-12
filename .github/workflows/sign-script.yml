@@ -1,18 +1,23 @@
-name: sign-binary
-run-name: "Sign ${{ github.ref }} binary"
+# Sample GitHub workflow for signing a PowerShell script using a short-lived
+# code signing certificate from HashiCorp Vault. This is NOT optimized for a
+# production environment.
+
+name: sign-script
+run-name: "Sign PowerShell script"
 
 on:
-  push: {} # FIXME
+  push: {} # FIXME: For testing purposes only
   release:
     types: [published]
 
 env:
+  # Be sure to configure VAULT_ADDR and VAULT_NAMESPACE in your repository variables
   VAULT_ADDR: ${{ vars.VAULT_ADDR }}
   VAULT_NAMESPACE: ${{ vars.VAULT_NAMESPACE }}
   environment: prod
 
 jobs:
-  sign-binary:
+  authenticode:
     runs-on: windows-latest
     environment: prod
     permissions:
@@ -44,7 +49,7 @@ jobs:
         shell: powershell
         run: |
           $Endpoint = "pki-codesign/issue/github-actions"
-          $CertSubject = "spiffe://github.com/${{ github.repository }}@${{ env.environment }}"
+          $CertSubject = "spiffe://github.com/${{ github.repository }}@${{ github.job }}"
           $Cert = $(./vault.exe write -format=json "$Endpoint" common_name="$CertSubject" uri_sans="$CertSubject")
           $CertJson = $Cert | ConvertFrom-Json
           Set-Content -Path "codesigning.crt" -Value "$($CertJson.data.certificate)`n$($CertJson.data.ca_chain -Join "`n")"
@@ -52,18 +57,18 @@ jobs:
           openssl pkcs12 -export -out codesigning.pfx -inkey codesigning.key -in codesigning.crt -passout pass:""
           Remove-Item -Path codesigning.crt,codesigning.key
 
-      - name: Sign binary
+      - name: Sign PowerShell script
         shell: powershell
         run: |
           $Cert = Get-PfxCertificate -FilePath "codesigning.pfx"
           Set-AuthenticodeSignature `
             -Certificate $Cert `
-            -FilePath "vault.exe" `
+            -FilePath "hello-world.ps1" `
             -TimestampServer "http://timestamp.digicert.com"
 
-      - name: Upload signed binary
+      - name: Upload signed PowerShell script
         uses: actions/upload-artifact@v3
         with:
-          name: vault-signed.exe
-          path: vault.exe
+          name: signed-powershell
+          path: hello-world.ps1
           retention-days: 1

@@ -22,7 +22,7 @@ locals {
 # Code Signing Issuing CA ------------------------------------------------------
 locals {
   code_sign_cn       = trimspace("${var.pki_base_name} Code Signing CA")
-  spiffe_id_template = "spiffe://github.com/{{ identity.entity.aliases.${vault_jwt_auth_backend.github_actions.accessor}.metadata.repository }}@{{ identity.entity.aliases.${vault_jwt_auth_backend.github_actions.accessor}.metadata.environment }}"
+  spiffe_id_template = "spiffe://github.com/{{ identity.entity.aliases.${vault_jwt_auth_backend.github_actions.accessor}.metadata.repository }}@*"
 }
 
 resource "vault_mount" "pki_codesign" {
