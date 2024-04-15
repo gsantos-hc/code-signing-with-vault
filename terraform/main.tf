@@ -77,6 +77,7 @@ resource "vault_pki_secret_backend_role" "code_sign_gh_actions" {
   organization              = var.pki_organization != null ? [var.pki_organization] : null
   enforce_hostnames         = false
   allowed_domains_template  = true
+  allow_glob_domains        = true
   allowed_domains           = [local.spiffe_id_template]
   allow_bare_domains        = true
   allowed_uri_sans_template = true

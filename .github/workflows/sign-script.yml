@@ -49,7 +49,7 @@ jobs:
         shell: powershell
         run: |
           $Endpoint = "pki-codesign/issue/github-actions"
-          $CertSubject = "spiffe://github.com/${{ github.repository }}@${{ github.job }}"
+          $CertSubject = "spiffe://github.com/${{ github.repository }}@${{ github.run_id }}-${{ github.job }}"
           $Cert = $(./vault.exe write -format=json "$Endpoint" common_name="$CertSubject" uri_sans="$CertSubject")
           $CertJson = $Cert | ConvertFrom-Json
           Set-Content -Path "codesigning.crt" -Value "$($CertJson.data.certificate)`n$($CertJson.data.ca_chain -Join "`n")"
