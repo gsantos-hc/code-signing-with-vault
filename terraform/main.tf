@@ -19,7 +19,7 @@ locals {
 # Code Signing Issuing CA ------------------------------------------------------
 locals {
   code_sign_cn       = trimspace("${var.pki_base_name} Code Signing CA")
-  spiffe_id_template = "spiffe://github.com/{{ identity.entity.aliases.${vault_jwt_auth_backend.github_actions.accessor}.metadata.repository }}@{{ identity.entity.aliases.${vault_jwt_auth_backend.github_actions.accessor}.metadata.environment }}"
+  spiffe_id_template = "spiffe://github.com/{{ identity.entity.aliases.${vault_jwt_auth_backend.github_actions.accessor}.metadata.repository }}@*"
 }
 
 resource "vault_mount" "pki_codesign" {
@@ -74,6 +74,7 @@ resource "vault_pki_secret_backend_role" "code_sign_gh_actions" {
   organization              = var.pki_organization != null ? [var.pki_organization] : null
   enforce_hostnames         = false
   allowed_domains_template  = true
+  allow_glob_domains        = true
   allowed_domains           = [local.spiffe_id_template]
   allow_bare_domains        = true
   allowed_uri_sans_template = true
